@@ -1,0 +1,46 @@
+{
+  "kansas since 2015": {
+    "lat": null,
+    "lon": null,
+    "radiusKm": null,
+    "date_from": "2015-01-01",
+    "date_to": null,
+    "ef_min": null,
+    "ef_max": null,
+    "text": null,
+    "_source": "mock"
+  },
+  "ef3+ near kansas since 2003": {
+    "lat": null,
+    "lon": null,
+    "radiusKm": null,
+    "date_from": "2003-01-01",
+    "date_to": null,
+    "ef_min": 3,
+    "ef_max": null,
+    "text": null,
+    "_source": "mock"
+  },
+  "EF3+ near Dallas since 1990": {
+    "lat": null,
+    "lon": null,
+    "radiusKm": null,
+    "date_from": "1990-01-01",
+    "date_to": null,
+    "ef_min": 3,
+    "ef_max": null,
+    "text": null,
+    "_source": "mock"
+  },
+  "near okhlahoma with more than 1 fatalatie": {
+    "lat": null,
+    "lon": null,
+    "radiusKm": null,
+    "date_from": null,
+    "date_to": null,
+    "ef_min": null,
+    "ef_max": null,
+    "text": "near okhlahoma with more than 1 fatalatie",
+    "_source": "mock"
+  }
+}

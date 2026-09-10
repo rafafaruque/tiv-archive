@@ -1,0 +1,41 @@
+{
+  "name": "tiv-archive",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:demo": "PARSER_MOCK=true next dev",
+    "build": "next build",
+    "start": "next start",
+    "ingest:spc": "node ./scripts/ingest_spc.js"
+  },
+  "dependencies": {
+    "@deck.gl/core": "^8.9.0",
+    "@deck.gl/extensions": "^8.9.0",
+    "@deck.gl/geo-layers": "^8.9.0",
+    "@deck.gl/layers": "^8.9.0",
+    "@deck.gl/mesh-layers": "^8.9.0",
+    "@deck.gl/react": "^8.9.0",
+    "csv-parse": "^5.4.0",
+    "dotenv": "^16.3.1",
+    "encoding": "^0.1.13",
+    "mapbox-gl": "^3.30.0",
+    "maplibre-gl": "^2.4.0",
+    "next": "13.4.10",
+    "openai": "^4.9.0",
+    "pg": "^8.11.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-map-gl": "^7.0.0"
+  },
+  "optionalDependencies": {
+    "pg-copy-streams": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.5.1",
+    "@types/pg": "^8.23.1",
+    "@types/react": "18.2.21",
+    "typescript": "5.2.2",
+    "vite": "^8.2.2"
+  }
+}
