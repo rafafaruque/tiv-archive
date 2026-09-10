@@ -1,4 +1,5 @@
 "use client"
+import { readApiResponse } from '../src/lib/apiResponse'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import DataInfo from '../components/DataInfo'
 import { allRatings, filterEvents, parseState, sortEvents, SortMode, stateQuery } from '../src/lib/explorerState'
@@ -92,7 +93,7 @@ export default function Page() {
     setStatus('Looking through the storm records…'); setLoading(true); setSearchError('')
     try {
       const res = await fetch(`/api/search?lat=${lat}&lon=${lon}&radiusKm=${radiusKm}`)
-      const payload = await res.json()
+      const payload = await readApiResponse(res, 'The tornado data service is unavailable. Please try again shortly.')
       if (!res.ok || payload.error || payload.message) throw new Error(payload.message ? 'The data service is unavailable. Please try again later.' : 'Search failed. Please try again.')
       if (request !== searchRequest.current) return []
       if (payload.dateRange) setDateRange(payload.dateRange)
@@ -112,7 +113,7 @@ export default function Page() {
     setSelectedId(id); setDrawerOpen(false); setStatus('Loading full tornado path…')
     try {
       const res = await fetch(`/api/tornado?id=${encodeURIComponent(id)}`)
-      const payload = await res.json()
+      const payload = await readApiResponse(res, 'The tornado data service is unavailable. Please try again shortly.')
       if (!res.ok || payload.error) throw new Error('Could not load the full path. Select the tornado to retry.')
       if (request !== selectionRequest.current) return
       const full = toFeatures([payload.tornado])[0]

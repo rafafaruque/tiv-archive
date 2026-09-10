@@ -17,6 +17,9 @@ export default function TornadoAnimator({ features, visible, ef, onEfChange, dat
   const [mapError, setMapError] = useState('')
   const [progress, setProgress] = useState(0)
   const progressRef = useRef(0)
+  const [detailsExpanded, setDetailsExpanded] = useState(false)
+  const detailPanel = useRef<HTMLElement>(null)
+  useEffect(() => setDetailsExpanded(false), [selectedId])
   const [pathPlaying, setPathPlaying] = useState(false)
   const [historyPlaying, setHistoryPlaying] = useState(false)
   const years = useMemo(() => features.flatMap(f => { const date = eventDate(f.properties); return date ? [Number(date.slice(0, 4))] : [] }), [features])
@@ -100,11 +103,28 @@ export default function TornadoAnimator({ features, visible, ef, onEfChange, dat
     setProgress(0); setPathPlaying(Boolean(coords?.length))
     if (coords?.length) setHistoryPlaying(false)
     if (!coords?.length || !mapRef.current) return
+
+  }, [selectedId, coords])
+  useEffect(() => {
+    if (!ready || !coords?.length || !container.current || !mapRef.current) return
     const bounds = new maplibregl.LngLatBounds()
     coords.forEach(point => bounds.extend([point[0], point[1]]))
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    mapRef.current.fitBounds(bounds, { padding: 65, maxZoom: 10, duration: reducedMotion ? 0 : 650 })
-  }, [selectedId, coords])
+    const fit = () => {
+      const map = mapRef.current
+      const canvas = container.current?.getBoundingClientRect()
+      if (!map || !canvas) return
+      const mobile = window.matchMedia('(max-width: 700px)').matches
+      const panel = detailPanel.current?.getBoundingClientRect()
+      const bottom = mobile && panel ? Math.min(canvas.height - 120, Math.max(65, canvas.bottom - panel.top + 24)) : 65
+      map.fitBounds(bounds, {padding: mobile ? {top: 65, bottom: Math.max(20, bottom), left: 28, right: 28} : 65, maxZoom: 10,
+        duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650})
+    }
+    const frame = requestAnimationFrame(fit)
+    const observer = new ResizeObserver(fit)
+    observer.observe(container.current)
+    if (detailPanel.current) observer.observe(detailPanel.current)
+    return () => {cancelAnimationFrame(frame); observer.disconnect()}
+  }, [ready, coords, selectedId])
   useEffect(() => {
     if (!pathPlaying || !coords) return
     let frame: number
@@ -162,7 +182,7 @@ export default function TornadoAnimator({ features, visible, ef, onEfChange, dat
     {mapError && <div className="map-error" role="status">{mapError}</div>}
     <button className="fit-results" disabled={!visible.length || !ready} onClick={fitResults} aria-label="Fit map to visible results">⌖ Fit results</button>
     <div className="ef-legend panel" aria-label="Filter by EF rating"><strong>EF rating</strong><div>{[0,1,2,3,4,5,-1].map(i=><button key={i} aria-pressed={ef.includes(i)} onClick={()=>onEfChange(ef.includes(i)?ef.filter(n=>n!==i):[...ef,i])}><i style={{background:efColors[i]||'#687784'}} /><span>{i===-1?'Unknown':`EF${i}`}</span><b aria-hidden="true">{ef.includes(i)?'✓':'−'}</b></button>)}</div><button className="legend-reset" onClick={()=>onEfChange([-1,0,1,2,3,4,5])}>Show all</button></div>
-    {p && <section className="detail-panel panel" aria-label="Selected tornado details"><button className="close-detail" aria-label="Close tornado details" onClick={() => onSelect(null)}>×</button><p className="eyebrow"><img className="selected-art" src="/images/croptornado.png" alt="" width={28} height={28} />SELECTED TORNADO</p><h2 className={eventDate(p) ? "detail-date-heading" : undefined}>{eventDate(p) ? <time dateTime={eventDate(p)!}>{dateLabel(p, 'long')}</time> : p.displayName}</h2>{eventDate(p) ? <p className="detail-event-name">{p.displayName}</p> : <p className="muted detail-date">Date unavailable</p>}<p className="storm-summary">{stormSummary(p)}</p><span className="ef-badge" style={{ borderColor: p.color }}>{efLabel(p)}</span><dl><div><dt>Path length</dt><dd>{lengthLabel(p)}</dd></div><div><dt>Fatalities</dt><dd>{p.fatalities ?? 'Unknown'}</dd></div>{p.injuries != null && <div><dt>Injuries</dt><dd>{p.injuries}</dd></div>}</dl><button className="primary replay-button" onClick={() => { if (pathPlaying) setPathPlaying(false); else { if (progress >= 1) { progressRef.current = 0; setProgress(0) }; setPathPlaying(true) } }}>{pathPlaying ? 'Ⅱ Pause path' : progress > 0 && progress < 1 ? '▶ Resume path' : '▶ Replay path'}</button><div className="path-progress" role="progressbar" aria-label="Path replay progress" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress * 100}%` }} /></div><p className="record-id">Database ID: {p.id}{p.event_id ? ` · NOAA/SPC ID: ${p.event_id}` : ''}</p></section>}
+    {p && <section ref={detailPanel} className={`detail-panel panel ${detailsExpanded ? 'details-expanded' : 'details-compact'}`} aria-label="Selected tornado details"><button className="close-detail" aria-label="Close tornado details" onClick={() => onSelect(null)}>×</button><p className="eyebrow"><img className="selected-art" src="/images/croptornado.png" alt="" width={28} height={28} />SELECTED TORNADO</p><h2 className={eventDate(p) ? "detail-date-heading" : undefined}>{eventDate(p) ? <time dateTime={eventDate(p)!}>{dateLabel(p, 'long')}</time> : p.displayName}</h2>{eventDate(p) ? <p className="detail-event-name">{p.displayName}</p> : <p className="muted detail-date">Date unavailable</p>}<button className="mobile-detail-toggle" aria-expanded={detailsExpanded} aria-controls="tornado-extra-details" onClick={() => setDetailsExpanded(v => !v)}>{detailsExpanded ? 'Less detail ▴' : 'Details ▾'}</button><div id="tornado-extra-details" className="detail-extra"><p className="storm-summary">{stormSummary(p)}</p><span className="ef-badge" style={{ borderColor: p.color }}>{efLabel(p)}</span><dl><div><dt>Path length</dt><dd>{lengthLabel(p)}</dd></div><div><dt>Fatalities</dt><dd>{p.fatalities ?? 'Unknown'}</dd></div>{p.injuries != null && <div><dt>Injuries</dt><dd>{p.injuries}</dd></div>}</dl><p className="record-id">Database ID: {p.id}{p.event_id ? ` · NOAA/SPC ID: ${p.event_id}` : ''}</p></div><button className="primary replay-button" onClick={() => { if (pathPlaying) setPathPlaying(false); else { if (progress >= 1) { progressRef.current = 0; setProgress(0) }; setPathPlaying(true) } }}>{pathPlaying ? 'Ⅱ Pause path' : progress > 0 && progress < 1 ? '▶ Resume path' : '▶ Replay path'}</button><div className="path-progress" role="progressbar" aria-label="Path replay progress" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress * 100}%` }} /></div></section>}
     <section className="timeline panel" aria-label="Tornado history timeline">
       <button className="timeline-play" disabled={!years.length || minYear === maxYear} aria-label={historyPlaying ? 'Pause tornado history' : 'Play tornado history'} onClick={() => { setPathPlaying(false); if (year >= maxYear) onHistoryYear(minYear); setHistoryPlaying(v => !v) }}>{historyPlaying ? 'Ⅱ' : '▶'}</button>
       <div className="timeline-body">

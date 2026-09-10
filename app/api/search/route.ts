@@ -2,14 +2,16 @@ import { enrichRecords } from '../../../src/lib/sourceMetadata'
 import { NextResponse } from 'next/server'
 import { query } from '../../../src/lib/db'
 
-export async function GET(request: Request) {
+export const dynamic = 'force-dynamic'
+
+async function handleGet(request: Request) {
   const url = new URL(request.url)
   const lat = Number(url.searchParams.get('lat'))
   const lon = Number(url.searchParams.get('lon'))
   const radiusKm = Number(url.searchParams.get('radiusKm') || '50')
 
   if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ data: [], message: 'DATABASE_URL not configured; return mock data' })
+    return NextResponse.json({ error: 'The tornado data service is unavailable. Please try again shortly.' }, { status: 503 })
   }
 
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat)>90 || Math.abs(lon)>180 || !Number.isFinite(radiusKm) || radiusKm<1 || radiusKm>500) {
@@ -39,4 +41,15 @@ export async function GET(request: Request) {
   const res = await query(sql, [lon, lat, radiusMeters])
   const extent = await query('SELECT min(event_date)::text AS min_date, max(event_date)::text AS max_date FROM tornadoes WHERE duplicate_of IS NULL')
   return NextResponse.json({ data: await enrichRecords(res.rows), dateRange: extent.rows[0] })
+}
+
+export async function GET(request: Request) {
+  try {
+    return await handleGet(request)
+  } catch (error) {
+    // Connection errors can contain credentials or SQL; log only a safe code.
+    const code = (error as { code?: unknown })?.code
+    console.error('Tornado API request failed', { code: typeof code === 'string' && /^[A-Z0-9_]+$/.test(code) ? code : 'UNEXPECTED_ERROR' })
+    return NextResponse.json({ error: 'The tornado data service is unavailable. Please try again shortly.' }, { status: 503 })
+  }
 }

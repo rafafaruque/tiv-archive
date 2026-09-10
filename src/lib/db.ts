@@ -3,7 +3,7 @@ import { Pool } from 'pg'
 const connection = process.env.DATABASE_URL || ''
 let pool: Pool | null = null
 if (connection) {
-  pool = new Pool({ connectionString: connection })
+  pool = new Pool({ connectionString: connection, connectionTimeoutMillis: 8000 })
 }
 
 export async function query(text: string, params?: any[]) {
