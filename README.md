@@ -10,7 +10,7 @@ Explore tornado paths, replay historical storms, travel through decades of torna
 
 The app is free to explore in your browser. 
 
-## Historical Source Discovery — Powered by Parallel
+## Historical Source Discovery using Parallel
 
 TIV Archive uses the [Parallel Search API](https://parallel.ai) to connect tornado records with relevant historical sources.
 
