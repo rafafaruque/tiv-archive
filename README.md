@@ -1,14 +1,34 @@
-# 🌪️ TIV Archive
+# TIV Archive
 
-An interactive archive of historical U.S. tornadoes, built with Next.js, MapLibre, and NOAA Storm Prediction Center data.
+An interactive archive of historical U.S. tornadoes, built with Next.js, MapLibre, and NOAA/SPC data.
 
-Search locations across the U.S., explore historical tornado paths, replay storms, and travel through decades of tornado history. Discover related news articles and historical reports using the Parallel Search API.
+Explore tornado paths, replay historical storms, travel through decades of tornado history, and discover related reports using the Parallel Search API.
 
-**[Explore TIV Archive ↗](https://tiv-archive-iszt.vercel.app/)**
+## Explore TIV Archive
 
-## Getting Started
+**[Launch TIV Archive ↗](https://tiv-archive-iszt.vercel.app/)**
 
-**1. Clone the repository**
+The app is free to explore in your browser. 
+
+## Historical Source Discovery — Powered by Parallel
+
+TIV Archive uses the [Parallel Search API](https://parallel.ai) to connect tornado records with relevant historical sources.
+
+Select any tornado and click **Explore this storm** to discover related weather-service reports, news articles, and historical documentation.
+
+The integration includes context-aware search, relevance classification, readable source previews, and caching to reduce unnecessary API calls.
+
+Results are potential historical sources, not guaranteed matches to individual tornadoes.
+
+[Read more about the implementation](docs/storm-sources.md).
+
+---
+
+## For Developers: Run Locally (Optional)
+
+The following instructions are **only for developers who want to run their own copy**. You do not need to follow them to use the live website.
+
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/rafafaruque/tiv-archive.git
@@ -16,46 +36,31 @@ cd tiv-archive
 npm install
 ```
 
-**2. Run locally**
+### 2. Start the development server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Visit [http://localhost:3000](http://localhost:3000).
 
-No database setup is required for local development. The app uses the hosted tornado dataset by default.
+Local development uses the hosted tornado dataset automatically, so no database setup is required.
 
-## Parallel API (optional but recommended!)
+### 3. Enable Parallel Search locally (Optional)
 
-To enable **Explore this storm**, which finds historical sources related to a selected tornado:
-
-1. Get an API key from [Parallel](https://platform.parallel.ai).
-2. Create a `.env.local` file in the project root.
-3. Add your key:
+To use **Explore this storm** on your local copy, create a `.env.local` file and add your own [Parallel API key](https://platform.parallel.ai):
 
 ```env
 PARALLEL_API_KEY=your_api_key_here
 ```
 
-Restart the development server.
+Restart the development server after adding the key.
 
-The rest of TIV Archive works without a Parallel API key.
+**Note:** The live website already has Parallel configured. You only need your own key when running the project locally.
 
-## Tech Stack
+For independent database hosting and advanced search configuration, see the [database setup guide](docs/provision_supabase.md).
 
-- **Frontend:** Next.js, React, TypeScript, MapLibre
-- **Data:** NOAA/SPC, PostgreSQL/PostGIS
-- **Research:** Parallel Search API
+## Stack
 
-## Data & Documentation
-
-Tornado data comes from the [NOAA Storm Prediction Center](https://www.spc.noaa.gov/wcm/#data).
-
-Local development uses the hosted dataset. Running a separate database or enabling advanced natural-language search requires additional setup.
-
-- [Database setup](docs/provision_supabase.md)
-- [Parallel Search implementation](docs/storm-sources.md)
-
-Historical search results are potential sources, not verified matches to individual tornadoes.
+Next.js · TypeScript · MapLibre · PostgreSQL/PostGIS · NOAA/SPC · Parallel Search API
 
