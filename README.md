@@ -1,44 +1,61 @@
-# TIV Archive
+# 🌪️ TIV Archive
 
-Explore historical U.S. tornado records, map their paths, and replay selected storms.
+An interactive archive of historical U.S. tornadoes, built with Next.js, MapLibre, and NOAA Storm Prediction Center data.
 
-**Live project:** [tiv-archive-iszt.vercel.app](https://tiv-archive-iszt.vercel.app)
+Search locations across the U.S., explore historical tornado paths, replay storms, and travel through decades of tornado history. Discover related news articles and historical reports using the Parallel Search API.
 
-## Run locally
+**[Explore TIV Archive ↗](https://tiv-archive-iszt.vercel.app/)**
+
+## Getting Started
+
+**1. Clone the repository**
 
 ```bash
 git clone https://github.com/rafafaruque/tiv-archive.git
 cd tiv-archive
 npm install
+```
+
+**2. Run locally**
+
+```bash
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). No environment file, API key, database setup, or data import is required for location searches, date/rating filters, storm details, and path replay. Internet access is required.
+Open [http://localhost:3000](http://localhost:3000).
 
-With `npm run dev` and no `DATABASE_URL`, the local Next.js server reads historical data from the live project's public API. It proxies only validated GET requests for `/api/search` (including `datesOnly=true`) and `/api/tornado`, using a fixed host and no forwarded credentials or browser headers. The browser talks to the local server, avoiding cross-origin requests for tornado data. Hosted failures return a clear error; this mode depends on the live service being available.
+No database setup is required for local development. The app uses the hosted tornado dataset by default.
 
-A configured `DATABASE_URL` always uses your database. If you already have `.env.local`, you can try hosted mode without editing it:
+## Parallel API (optional but recommended!)
 
-```bash
-DATABASE_URL= npm run dev
+To enable **Explore this storm**, which finds historical sources related to a selected tornado:
+
+1. Get an API key from [Parallel](https://platform.parallel.ai).
+2. Create a `.env.local` file in the project root.
+3. Add your key:
+
+```env
+PARALLEL_API_KEY=your_api_key_here
 ```
 
-Hosted fallback is development-only. `npm run build` needs no database, but `npm start` and production deployments require `DATABASE_URL` to serve tornado data. Production never proxies back to itself.
+Restart the development server.
 
-## Optional features
+The rest of TIV Archive works without a Parallel API key.
 
-- **Storm sources:** add your own server-only `PARALLEL_API_KEY` to `.env.local` and restart the dev server. Parallel Search runs locally only after clicking **Explore this storm**; it is never proxied through the deployed site's research endpoint. See [configuration and relevance limitations](docs/storm-sources.md).
-- **Your own database:** set `DATABASE_URL` and `SPC_CSV_PATH` in `.env.local`, enable PostGIS, and import the bundled CSV into your own database. See the [database setup guide](docs/provision_supabase.md) and `.env.example`. Hosted mode never imports or writes records.
-- **Natural-language/semantic search:** the existing `/api/nl-search` route requires your own database; semantic search also needs its existing embedding/OpenAI setup. It is not part of the hosted proxy. Use location search and map filters for the default contributor setup.
+## Tech Stack
 
-Keep all credentials in Git-ignored `.env.local` or server environment variables. Never prefix secret keys with `NEXT_PUBLIC_`.
+- **Frontend:** Next.js, React, TypeScript, MapLibre
+- **Data:** NOAA/SPC, PostgreSQL/PostGIS
+- **Research:** Parallel Search API
 
-## Checks
+## Data & Documentation
 
-```bash
-npm run build
-npx tsc --noEmit
-for test in tests/*.cjs; do node "$test" || exit 1; done
-```
+Tornado data comes from the [NOAA Storm Prediction Center](https://www.spc.noaa.gov/wcm/#data).
 
-Run the build before the standalone type check so Next.js has generated its route types. Tests use fixtures and mocks, without changing a database or spending API credits.
+Local development uses the hosted dataset. Running a separate database or enabling advanced natural-language search requires additional setup.
+
+- [Database setup](docs/provision_supabase.md)
+- [Parallel Search implementation](docs/storm-sources.md)
+
+Historical search results are potential sources, not verified matches to individual tornadoes.
+
