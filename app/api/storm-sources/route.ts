@@ -43,7 +43,7 @@ async function searchStorm(id: number, apiKey: string): Promise<StormSourcesResp
       ? 'Source search is busy. Please try again shortly.'
       : 'Historical source search is unavailable. Please try again shortly.', response.status === 429 ? 429 : 502)
   }
-  const sources = parseStormSources(await response.json())
+  const sources = parseStormSources(await response.json(), storm)
   return { sources, expiresAt: Date.now() + (sources.length ? DAY : EMPTY_TTL) }
 }
 

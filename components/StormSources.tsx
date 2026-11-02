@@ -59,17 +59,21 @@ export default function StormSources({ id }: { id: number }) {
     </button>
     <section id={panelId} className="storm-sources" aria-label="Potential historical sources" aria-busy={loading} hidden={!open}>
       <h3>Potential historical sources</h3>
-      <p className="source-note">Search matches, not verified matches. Check dates and locations; reports may cover other tornadoes in the same outbreak.</p>
+      <p className="source-note">Potential sources, not verified matches. Outbreak reports may cover other tornadoes.</p>
       <div role="status" aria-live="polite">
         {loading && <p className="search-loading"><span aria-hidden="true" />Searching historical sources…</p>}
         {result && !result.sources.length && <p className="source-note">No sources found for this record. Historical coverage may be limited.</p>}
       </div>
       {error && <div className="source-error"><p className="error" role="alert">{error}</p><button onClick={() => void explore()}>Try again</button></div>}
-      {!!result?.sources.length && <ul className="source-list">
+      {!!result?.sources.length && <ul className="source-list" tabIndex={0} aria-label="Historical source results">
         {result.sources.map(source => <li className="source-card" key={source.url}>
           <p className="source-domain">{source.domain}</p>
+          <p className={`source-relevance ${source.relevance === 'likely-event' ? 'likely-event' : ''}`}
+            title={source.relevance === 'likely-event' ? 'The event date and specific location agree in the result text; this is not verification.' : 'The result could not be tied to this specific tornado. Check the original report.'}>
+            {source.relevance === 'likely-event' ? 'Likely event match' : 'Broader outbreak coverage'}
+          </p>
           <h4><a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}<span aria-hidden="true"> ↗</span><span className="source-sr-only"> (opens in a new tab)</span></a></h4>
-          <p className="source-excerpt">{source.excerpt || 'No excerpt provided by the search result.'}</p>
+          {source.excerpt && <p className="source-excerpt">{source.excerpt}</p>}
         </li>)}
       </ul>}
       <p className="source-credit">Search powered by Parallel</p>

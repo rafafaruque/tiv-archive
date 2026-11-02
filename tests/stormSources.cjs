@@ -10,22 +10,23 @@ const storm = { type: 'Feature', geometry: { type: 'LineString', coordinates: [[
 const body = stormSearchRequest(storm)
 assert.equal(body.mode, 'fast')
 assert.equal(body.advanced_settings.max_results, 5)
-assert.equal(body.advanced_settings.excerpt_settings.max_chars_per_result, 700)
+assert.equal(body.advanced_settings.excerpt_settings.max_chars_per_result, 1200)
 for (const identifier of ['2011-05-24', 'Oklahoma', 'El Reno', 'Canadian County', '33.0000, -97.0000', '34.0000, -96.0000', '123']) assert(body.objective.includes(identifier))
 assert(body.search_queries.every(query => query.length <= 200 && query.includes('2011-05-24')))
 assert.equal(stormSearchRequest({ ...storm, properties: { id: 2 } }), null)
 assert(stormSearchRequest({ ...storm, properties: { id: 2, event_date: '2011-05-24' } }).objective.includes('state unavailable'))
 const provider = { results: [
-  { title: 'NWS report', url: 'https://www.weather.gov/oun/storm', excerpts: ['Actual result text.', 'A second excerpt.'] },
+  { title: 'NWS report', url: 'https://www.weather.gov/oun/storm', excerpts: ['The tornado damaged several homes near El Reno in Oklahoma.', 'The storm tracked northeast across open farmland.'] },
   { title: 'Duplicate', url: 'https://www.weather.gov/oun/storm', excerpts: ['Duplicate'] },
   { title: 'Unsafe', url: 'javascript:alert(1)', excerpts: ['Unsafe'] },
   { title: 'Bad URL', url: 'not a url' },
   { title: 'Archive', url: 'https://example.com/archive', excerpts: [] },
 ] }
-const parsed = parseStormSources(provider)
+const parsed = parseStormSources(provider, storm)
 assert.equal(parsed.length, 2)
 assert.equal(parsed[0].domain, 'weather.gov')
-assert.equal(parsed[0].excerpt, 'Actual result text.\n\nA second excerpt.')
+assert.equal(parsed[0].excerpt, 'The tornado damaged several homes near El Reno in Oklahoma. The storm tracked northeast across open farmland.')
+assert.equal(parsed[0].relevance, 'broader-outbreak')
 assert.equal(parsed[1].excerpt, '')
 assert.throws(() => parseStormSources({ error: 'malformed' }))
 
