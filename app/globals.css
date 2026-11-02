@@ -155,7 +155,8 @@ select:focus-visible{outline:3px solid #2d698b;outline-offset:2px}
 .storm-sources>*{flex-shrink:0}.storm-research>.explore-storm{flex-shrink:0}
 .storm-sources h3{font-size:12px;line-height:1.5;margin-bottom:7px}
 .source-note{font-size:10px;line-height:1.5;color:var(--muted);margin-bottom:9px}
-.storm-sources .source-list{list-style:none;padding:2px;margin:0;display:grid;grid-auto-rows:max-content;gap:8px;min-height:90px;max-height:200px;flex-shrink:1;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+/* Contain absolutely positioned screen-reader labels so they cannot enlarge the outer panel's scroll area. */
+.storm-sources .source-list{position:relative;list-style:none;padding:2px;margin:0;display:grid;grid-auto-rows:max-content;gap:8px;min-height:90px;max-height:200px;flex-shrink:1;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 .source-list:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .source-card{min-width:0;border:1px solid var(--border);border-radius:6px;background:#f5f9fa;padding:11px}
 .source-domain{font-family:var(--mono);font-size:9px;color:#46794b;overflow-wrap:anywhere}
@@ -182,6 +183,9 @@ select:focus-visible{outline:3px solid #2d698b;outline-offset:2px}
 .source-expand:hover{background:#e3eff5}
 /* The keyed StormSources component owns this state, so changing/closing a selection resets it. */
 .detail-panel:has(.storm-research.sources-expanded){width:520px;max-width:calc(100% - 28px);height:calc(100% - 204px);max-height:calc(100% - 204px);bottom:180px;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.detail-panel.details-compact:has(.storm-research.sources-expanded) .detail-extra{display:none}
+.detail-panel:has(.storm-research.sources-expanded) .mobile-detail-toggle{display:inline-block;min-height:36px;font-size:11px;padding:6px 10px;margin-right:8px}
+.detail-panel:has(.storm-research.sources-expanded) .replay-button{display:inline-block;width:auto;min-height:36px;padding:6px 12px}
 .detail-panel:has(.storm-research.sources-expanded)>.storm-research.sources-expanded{min-height:0;max-height:none;display:grid;grid-template-rows:auto minmax(0,1fr)}
 .detail-panel:has(.storm-research.sources-expanded) .storm-sources{min-height:0}
 .detail-panel:has(.storm-research.sources-expanded) .source-list{flex:1 1 0px;min-height:0;max-height:none;overflow-y:scroll;scrollbar-width:thin;scrollbar-color:#9bb8c7 #edf3f6}
