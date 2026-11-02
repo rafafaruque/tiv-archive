@@ -27,6 +27,7 @@ function loadSources(id: number): Promise<StormSourcesResponse> {
 
 export default function StormSources({ id }: { id: number }) {
   const [open, setOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<StormSourcesResponse | null>(null)
   const [error, setError] = useState('')
@@ -51,14 +52,23 @@ export default function StormSources({ id }: { id: number }) {
   }
 
   const panelId = `storm-sources-${id}`
-  return <div className="storm-research">
+  return <div className={`storm-research${open && expanded ? ' sources-expanded' : ''}`}>
     <button className="explore-storm" aria-expanded={open} aria-controls={panelId} disabled={loading}
       onClick={() => open ? setOpen(false) : void explore()}>
       <span aria-hidden="true">⌕</span> {open ? 'Hide storm sources' : 'Explore this storm'}
       <span aria-hidden="true">{open ? '−' : '+'}</span>
     </button>
     <section id={panelId} className="storm-sources" aria-label="Potential historical sources" aria-busy={loading} hidden={!open}>
-      <h3>Potential historical sources</h3>
+      <div className="source-heading">
+        <h3>Potential historical sources</h3>
+        <button className="source-expand" type="button" aria-label={expanded ? 'Collapse storm sources' : 'Expand storm sources'}
+          title={expanded ? 'Collapse storm sources' : 'Expand storm sources'} aria-pressed={expanded} aria-controls={panelId}
+          onClick={() => setExpanded(value => !value)}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d={expanded ? 'M1 6h5V1M10 15v-5h5M6 6 1 1m9 9 5 5' : 'M1 6V1h5M10 15h5v-5M1 1l5 5m4 4 5 5'} />
+          </svg>
+        </button>
+      </div>
       <p className="source-note">Potential sources, not verified matches. Outbreak reports may cover other tornadoes.</p>
       <div role="status" aria-live="polite">
         {loading && <p className="search-loading"><span aria-hidden="true" />Searching historical sources…</p>}

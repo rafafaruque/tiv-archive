@@ -1,13 +1,15 @@
 import { enrichRecords } from '../../../src/lib/sourceMetadata'
 import { NextResponse } from 'next/server'
 import { query } from '../../../src/lib/db'
+import { proxyHostedTornadoData, useHostedTornadoData, validatedTornadoQuery } from '../../../src/lib/hostedTornadoData'
 
 export const dynamic = 'force-dynamic'
 
 async function handleGet(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const id = searchParams.get('id')
-  if (!id) return NextResponse.json({ error: 'missing id' }, { status: 400 })
+  const params = validatedTornadoQuery('tornado', new URL(req.url).searchParams)
+  if (!params) return NextResponse.json({ error: 'A valid tornado ID is required.' }, { status: 400 })
+  if (useHostedTornadoData()) return proxyHostedTornadoData('tornado', params)
+  const id = params.get('id')
 
   const sql = `SELECT id, event_id, event_date::text AS event_date, ef_rating, path_length_km, path_width_m, injuries, fatalities, ST_AsGeoJSON(geom) as geom FROM tornadoes WHERE id = (SELECT COALESCE(duplicate_of,id) FROM tornadoes WHERE id = $1) LIMIT 1`
   const res = await query(sql, [id])

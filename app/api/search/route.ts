@@ -1,29 +1,26 @@
 import { enrichRecords } from '../../../src/lib/sourceMetadata'
 import { NextResponse } from 'next/server'
 import { query } from '../../../src/lib/db'
+import { proxyHostedTornadoData, useHostedTornadoData, validatedTornadoQuery } from '../../../src/lib/hostedTornadoData'
 
 export const dynamic = 'force-dynamic'
 
 async function handleGet(request: Request) {
-  const url = new URL(request.url)
-  const lat = Number(url.searchParams.get('lat'))
-  const lon = Number(url.searchParams.get('lon'))
-  const radiusKm = Number(url.searchParams.get('radiusKm') || '50')
+  const params = validatedTornadoQuery('search', new URL(request.url).searchParams)
+  if (!params) return NextResponse.json({ error: 'Provide valid lat, lon, and radiusKm (1–500), or datesOnly=true.' }, { status: 400 })
+  if (useHostedTornadoData()) return proxyHostedTornadoData('search', params)
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL?.trim()) {
     return NextResponse.json({ error: 'The tornado data service is unavailable. Please try again shortly.' }, { status: 503 })
   }
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat)>90 || Math.abs(lon)>180 || !Number.isFinite(radiusKm) || radiusKm<1 || radiusKm>500) {
-    return NextResponse.json({ error: 'lat and lon required' }, { status: 400 })
-  }
-
-  if (url.searchParams.get('datesOnly') === 'true') {
+  if (params.has('datesOnly')) {
     const extent = await query('SELECT min(event_date)::text AS min_date, max(event_date)::text AS max_date FROM tornadoes WHERE duplicate_of IS NULL')
     return NextResponse.json({ dateRange: extent.rows[0] })
   }
 
-  const radiusMeters = radiusKm * 1000
+  const lat = Number(params.get('lat')), lon = Number(params.get('lon'))
+  const radiusMeters = Number(params.get('radiusKm')) * 1000
   const sql = `
     SELECT id, ARRAY(SELECT a.id FROM tornadoes a WHERE a.duplicate_of = tornadoes.id ORDER BY a.id) AS alias_ids, event_id, event_date::text AS event_date, ef_rating, path_length_km, path_width_m, injuries, fatalities,
       ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint($1,$2),4326)::geography) / 1000 AS distance_km,

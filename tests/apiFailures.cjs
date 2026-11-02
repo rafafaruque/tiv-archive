@@ -2,6 +2,7 @@ const assert = require('node:assert/strict')
 const fs = require('fs'), ts = require('typescript')
 require.extensions['.ts'] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename,'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText, filename)
 process.env.DATABASE_URL = ''
+process.env.NODE_ENV = 'test'
 const db = require('../src/lib/db.ts')
 db.query = async () => {throw Object.assign(new Error('private connection details'), {code:'ENETUNREACH'})}
 const search = require('../app/api/search/route.ts')

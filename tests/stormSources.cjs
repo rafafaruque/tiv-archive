@@ -31,6 +31,7 @@ assert.equal(parsed[1].excerpt, '')
 assert.throws(() => parseStormSources({ error: 'malformed' }))
 
 process.env.DATABASE_URL = ''
+process.env.NODE_ENV = 'test'
 const db = require('../src/lib/db.ts')
 const metadata = require('../src/lib/sourceMetadata.ts')
 let queries = 0, searches = 0, outcome = 'success'

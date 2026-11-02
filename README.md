@@ -1,33 +1,44 @@
-https://tiv-archive-iszt.vercel.app/
+# TIV Archive
 
-## Explore this storm
+Explore historical U.S. tornado records, map their paths, and replay selected storms.
 
-Select a tornado, then click **Explore this storm** in its detail panel to find up to five potential historical sources. Cards display the titles, domains, and excerpts returned by Parallel Search and link to the original pages. These are search matches, **not verified matches**: outbreak reports may describe other tornadoes with the same date and state. No narrative is generated.
+**Live project:** [tiv-archive-iszt.vercel.app](https://tiv-archive-iszt.vercel.app)
 
-Add your key to the Git-ignored `.env.local` file (created locally for this feature), or copy `.env.example` to `.env.local` on a fresh checkout:
+## Run locally
 
-```dotenv
-PARALLEL_API_KEY=your_parallel_api_key
+```bash
+git clone https://github.com/rafafaruque/tiv-archive.git
+cd tiv-archive
+npm install
+npm run dev
 ```
 
-Keep your existing `DATABASE_URL` and `SPC_CSV_PATH` configuration. Restart `npm run dev` after changing environment variables. On your host, set `PARALLEL_API_KEY` as a server environment variable. Never use a `NEXT_PUBLIC_` prefix.
+Open [localhost:3000](http://localhost:3000). No environment file, API key, database setup, or data import is required for location searches, date/rating filters, storm details, and path replay. Internet access is required.
 
-`GET /api/storm-sources?id=<database-id>` resolves the existing canonical tornado record and its source metadata server-side. It searches using the confirmed date, available state/city/county, rating, source identifier, and path endpoints. If state metadata is unavailable, the search explicitly uses coordinates without guessing a location; records without a confirmed date or usable geometry return an explanatory error without calling Parallel. No NOAA data is modified.
+With `npm run dev` and no `DATABASE_URL`, the local Next.js server reads historical data from the live project's public API. It proxies only validated GET requests for `/api/search` (including `datesOnly=true`) and `/api/tornado`, using a fixed host and no forwarded credentials or browser headers. The browser talks to the local server, avoiding cross-origin requests for tornado data. Hosted failures return a clear error; this mode depends on the live service being available.
 
-The integration uses only `POST https://api.parallel.ai/v1/search`, with `mode: "fast"`, `advanced_settings.max_results: 5`, and an excerpt budget of 1,200 characters per result so useful prose has room beyond site navigation. It uses native `fetch` and needs no additional dependencies. The request and result schemas follow Parallel's [best practices](https://docs.parallel.ai/search/best-practices), [API reference](https://docs.parallel.ai/api-reference/search/search), and [advanced settings](https://docs.parallel.ai/search/advanced-search-settings).
+A configured `DATABASE_URL` always uses your database. If you already have `.env.local`, you can try hosted mode without editing it:
 
-Search runs only after an explicit click. Successful results are cached by tornado ID for 24 hours in a bounded server-process cache and in memory for the browser session. Empty results expire after 15 minutes; errors are not cached. Concurrent requests for the same ID share a pending lookup. Server caches reset on restart and are separate across serverless instances, so a cold instance may repeat a search.
+```bash
+DATABASE_URL= npm run dev
+```
 
-To test: run `npm run dev` with your normal database configuration, search a location, select a tornado, and click **Explore this storm**. Check the loading state, source links, mobile layout, and path replay. Close/reopen sources or select the same tornado again: the browser should reuse cached results. Without a key, the panel shows a configuration error and a retry button. After adding a key, retry; failures do not poison the cache.
+Hosted fallback is development-only. `npm run build` needs no database, but `npm start` and production deployments require `DATABASE_URL` to serve tornado data. Production never proxies back to itself.
 
-Validation commands: `npx tsc --noEmit`, `npm run build`, `node tests/stormSources.cjs`, and `node tests/stormSourcePresentation.cjs`. The focused tests use fixtures and mocked database/Search responses, so they do not spend API credits.
+## Optional features
 
-### Source presentation and relevance limitations
+- **Storm sources:** add your own server-only `PARALLEL_API_KEY` to `.env.local` and restart the dev server. Parallel Search runs locally only after clicking **Explore this storm**; it is never proxied through the deployed site's research endpoint. See [configuration and relevance limitations](docs/storm-sources.md).
+- **Your own database:** set `DATABASE_URL` and `SPC_CSV_PATH` in `.env.local`, enable PostGIS, and import the bundled CSV into your own database. See the [database setup guide](docs/provision_supabase.md) and `.env.example`. Hosted mode never imports or writes records.
+- **Natural-language/semantic search:** the existing `/api/nl-search` route requires your own database; semantic search also needs its existing embedding/OpenAI setup. It is not part of the hosted proxy. Use location search and map filters for the default contributor setup.
 
-Excerpts are selected deterministically from the returned text, with markdown/HTML formatting, obvious menus, pipe tables, and repeated text removed. Up to two storm-related sentences are selected, capped at 420 characters and displayed in four lines inside a bounded, independently scrollable source list. Ellipses indicate omitted text; previews containing only boilerplate are omitted. Facts are not paraphrased or generated, and the original page remains available through its title link. On shorter desktop screens, the existing **Details** toggle also makes metadata available on demand while researching, keeping the date and replay controls within reach.
+Keep all credentials in Git-ignored `.env.local` or server environment variables. Never prefix secret keys with `NEXT_PUBLIC_`.
 
-**Likely event match** requires an explicit matching event date, state, and city in the same title or sentence. County-only matches additionally require the recorded F/EF intensity. Conflicting dates in the title, conflicting ratings in the passage, or explicit outbreak/multiple-tornado language prevent this label. Likely matches are shown first, preserving provider order within each group. Publication dates, database/source identifiers, and date/state overlap alone do not establish event identity.
+## Checks
 
-**Broader outbreak coverage** is the conservative fallback for sources that cannot be tied to the selected track, including results with insufficient text. This label does not verify that a page covers the selected tornado or even its outbreak. Valid sources remain accessible instead of being aggressively filtered out.
+```bash
+npm run build
+npx tsc --noEmit
+for test in tests/*.cjs; do node "$test" || exit 1; done
+```
 
-For the project report: these labels are text-based heuristics, not historical verification. A city or county can still contain multiple tornadoes on one date; a report can compare events or omit identifying details. The current archive enrichment normally supplies state and coordinates, not city/county names, so many legitimate sources will retain the broader label. Coordinates guide Search but are not reverse-geocoded or used to assert exact matches. Cleanup may miss unusual boilerplate or omit useful table-only material; consult the original source for context. No full-page extraction or additional AI model is used. Existing cache TTLs still apply; restart/redeploy and reload the page to discard earlier in-memory results after an update.
+Run the build before the standalone type check so Next.js has generated its route types. Tests use fixtures and mocks, without changing a database or spending API credits.

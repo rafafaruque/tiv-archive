@@ -3,6 +3,7 @@ import { query } from '../../../src/lib/db'
 import { enrichRecords } from '../../../src/lib/sourceMetadata'
 import { toFeatures } from '../../../src/lib/tornadoDisplay'
 import { parseStormSources, stormSearchRequest, StormSourcesResponse } from '../../../src/lib/stormSources'
+import { proxyHostedTornadoData, useHostedTornadoData } from '../../../src/lib/hostedTornadoData'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -18,15 +19,24 @@ class SourceError extends Error {
 }
 
 async function searchStorm(id: number, apiKey: string): Promise<StormSourcesResponse> {
-  const records = await query(`
+  let rows: Record<string, unknown>[]
+  if (useHostedTornadoData()) {
+    const response = await proxyHostedTornadoData('tornado', new URLSearchParams({ id: String(id) }))
+    if (!response.ok) throw new SourceError(response.status === 404 ? 'This tornado record could not be found.'
+      : 'The hosted tornado data service is unavailable. Please try again shortly.', response.status)
+    rows = [(await response.json()).tornado]
+  } else {
+    const records = await query(`
     SELECT id, event_id, event_date::text AS event_date, ef_rating, path_length_km,
       path_width_m, injuries, fatalities, ST_AsGeoJSON(geom) AS geom
     FROM tornadoes
     WHERE id = (SELECT COALESCE(duplicate_of, id) FROM tornadoes WHERE id = $1)
     LIMIT 1
-  `, [id])
-  if (!records.rows.length) throw new SourceError('This tornado record could not be found.', 404)
-  const storm = toFeatures(await enrichRecords(records.rows))[0]
+    `, [id])
+    rows = await enrichRecords(records.rows)
+  }
+  if (!rows.length) throw new SourceError('This tornado record could not be found.', 404)
+  const storm = toFeatures(rows)[0]
   if (!storm) throw new SourceError('This record has no usable location for a historical search.', 422)
   const body = stormSearchRequest(storm)
   if (!body) throw new SourceError('This record has no confirmed date for a historical search.', 422)
